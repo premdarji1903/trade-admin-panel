@@ -25,9 +25,10 @@ export default function AdminLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
+      const data = await res.json();
       if (res.ok) {
         // Login successful
+         localStorage.setItem("token", data.token);
         // alert("✅ Login successful! Redirecting to dashboard...");
          navigate("/dashboard");
         // You can add redirect here later
