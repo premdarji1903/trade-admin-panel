@@ -14,7 +14,7 @@ const ClientsList = () => {
         `https://trade-client-server.onrender.com/clients?page=${pageNumber}&limit=10`
       );
       setClients(res.data.clients || []);
-      setTotalPages(res.data.pagination.totalPages);
+      setTotalPages(res.data.totalPages);
     } catch (error) {
       console.error("Error fetching clients:", error);
     } finally {
