@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLogin from "./Login";
 import Dashboard from "./Dashboard";
+import ClientsList from "./ClientList";
 
 function App() {
   return (
@@ -8,7 +9,7 @@ function App() {
       <Routes>
         <Route path="/" element={<AdminLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />
-
+        <Route path="/clients" element={<ClientsList />} />
       </Routes>
     </BrowserRouter>
   );

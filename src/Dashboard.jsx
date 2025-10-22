@@ -122,6 +122,12 @@ export default function Dashboard() {
             >
               Update Token
             </button>
+            <button
+              style={styles.clientsButton}
+              onClick={() => navigate("/clients")}
+            >
+              Clients
+            </button>
           </div>
         </div>
 
@@ -388,5 +394,14 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
+  },
+  clientsButton: {
+    backgroundColor: "#2e7d32",
+    color: "#fff",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "500",
   },
 };
