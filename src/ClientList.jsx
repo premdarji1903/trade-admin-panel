@@ -60,6 +60,7 @@ const ClientsList = () => {
               <th style={styles.th}>Email</th>
               <th style={styles.th}>Phone</th>
               <th style={styles.th}>Paid</th>
+              <th style={styles.th}>Trade</th>
             </tr>
           </thead>
           <tbody>
@@ -95,6 +96,11 @@ const ClientsList = () => {
                       />
                     </span>
                   </label>
+                </td>
+                <td style={styles.td}>
+                  {client.trade && client.trade.length > 0
+                    ? client.trade.join(", ")
+                    : "No trades"}
                 </td>
               </tr>
             ))}
