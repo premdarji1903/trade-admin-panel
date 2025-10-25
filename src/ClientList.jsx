@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 const ClientsList = () => {
   const [clients, setClients] = useState([]);
   const [page, setPage] = useState(1);
@@ -61,6 +66,8 @@ const ClientsList = () => {
               <th style={styles.th}>Phone</th>
               <th style={styles.th}>Paid</th>
               <th style={styles.th}>Trade</th>
+              <th style={styles.th}>Last Login Date</th>
+              <th style={styles.th}>Last Login Time</th>
             </tr>
           </thead>
           <tbody>
@@ -101,6 +108,22 @@ const ClientsList = () => {
                   {client.trade && client.trade.length > 0
                     ? client.trade.join(", ")
                     : "No trades"}
+                </td>
+                <td style={styles.td}>
+                  {client?.lastLogin
+                    ? dayjs
+                        .utc(client.lastLogin) // 👈 treat given time as UTC
+                        .tz("Asia/Kolkata") // 👈 convert to IST
+                        .format("YYYY-MM-DD")
+                    : "-"}
+                </td>
+                <td style={styles.td}>
+                  {client?.lastLogin
+                    ? dayjs
+                        .utc(client.lastLogin) // 👈 treat given time as UTC
+                        .tz("Asia/Kolkata") // 👈 convert to IST
+                        .format("hh:mm:ss A")
+                    : "-"}
                 </td>
               </tr>
             ))}
