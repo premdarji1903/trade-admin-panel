@@ -8,47 +8,87 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit] = useState(40);
   const [totalPages, setTotalPages] = useState(1);
   const [showTokenBox, setShowTokenBox] = useState(false); // Toggle box
   const [clientIdInput, setClientIdInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
+   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  const fetchTrades = async (start, end, pageNo = 1) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const query = new URLSearchParams();
-      if (start) query.append("start", start);
-      if (end) query.append("end", end);
-      query.append("page", pageNo);
-      query.append("limit", limit);
-      const res = await fetch(
-        `https://trade-client-server.onrender.com/trades?${query.toString()}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+// Updated fetchTrades to accept clientName
+const fetchTrades = async (start, end, pageNo = 1) => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    const query = new URLSearchParams();
+    if (start) query.append("start", start);
+    if (end) query.append("end", end);
+    query.append("page", pageNo);
+    query.append("limit", limit);
 
-      if (res.status === 401 || res.status === 403) {
-        localStorage.removeItem("token");
-        navigate("/");
-        return;
+    const res = await fetch(
+      `https://trade-client-server.onrender.com/trades?${query.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
-      const data = await res.json();
-      setTrades(data?.trades);
-      setTotalPages(data.totalPages);
-      setPage(data.page);
-    } catch (error) {
-      console.error("Error fetching trades:", error);
-    } finally {
-      setLoading(false);
+    );
+
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem("token");
+      navigate("/");
+      return;
     }
-  };
+
+    const data = await res.json();
+    setTrades(data?.trades);
+    setTotalPages(data.totalPages);
+    setPage(data.page);
+  } catch (error) {
+    console.error("Error fetching trades:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const fetchSearchTrades = async (pageNo = 1, clientName) => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    const query = new URLSearchParams();
+    query.append("page", pageNo);
+    query.append("limit", limit);
+    if (clientName) query.append("clientName", clientName); // optional clientName
+
+    const res = await fetch(
+      `https://trade-client-server.onrender.com/trades?${query.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem("token");
+      navigate("/");
+      return;
+    }
+
+    const data = await res.json();
+    setTrades(data?.trades);
+    setTotalPages(data.totalPages);
+    setPage(data.page);
+  } catch (error) {
+    console.error("Error fetching trades:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -84,6 +124,16 @@ export default function Dashboard() {
       alert("Error updating token");
     }
   };
+ 
+  const handleSearch = () => {
+    setSearchTerm(searchTerm);
+   fetchSearchTrades(1, searchTerm);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleSearch(); // Trigger search on Enter
+  };
+
 
   useEffect(() => {
     const today = new Date();
@@ -156,6 +206,24 @@ export default function Dashboard() {
 
         <p style={styles.subtitle}>View Trades</p>
 
+        <div style={styles.container}>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={handleKeyPress}
+            style={styles.input}
+          />
+          <button
+            style={styles.button}
+            onClick={handleSearch}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#45a049")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#4CAF50")}
+          >
+            Search
+          </button>
+        </div>
         {/* Date range filter */}
         <div style={styles.dateFilter}>
           <div>
@@ -212,7 +280,9 @@ export default function Dashboard() {
                     <td>{trade.quantity}</td>
                     <td>{trade.entry_price}</td>
                     <td>{trade.exit_price || "-"}</td>
-                    <td>{(trade.exit_price - trade.entry_price).toFixed(2) || 0}</td>
+                    <td>
+                      {(trade.exit_price - trade.entry_price).toFixed(2) || 0}
+                    </td>
                     <td>{trade.status}</td>
                     <td>{trade.created_at}</td>
                     <td>{trade.exit_time || "-"}</td>
@@ -338,13 +408,13 @@ const styles = {
     color: "#9CA3AF",
   },
   logoutButton: {
-    display: "block",
-    margin: "0 auto 20px", // center button and add margin below
+    // display: "block",
+    margin: "0 0 20px auto", // center button and add margin below
     padding: "10px 20px",
     backgroundColor: "#EF4444",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "20px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "14px",
@@ -406,5 +476,31 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "500",
+  },
+  container: {
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "20px",
+    gap: "10px",
+  },
+  input: {
+    padding: "8px 12px",
+    fontSize: "16px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    width: "250px",
+  },
+  button: {
+    padding: "8px 16px",
+    fontSize: "16px",
+    borderRadius: "5px",
+    border: "none",
+    backgroundColor: "#4CAF50",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "background-color 0.3s",
+  },
+  buttonHover: {
+    backgroundColor: "#45a049",
   },
 };
