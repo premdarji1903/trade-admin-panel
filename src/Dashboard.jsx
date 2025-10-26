@@ -8,7 +8,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [showTokenBox, setShowTokenBox] = useState(false); // Toggle box
   const [clientIdInput, setClientIdInput] = useState("");
@@ -192,16 +192,14 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   <th>Client Name</th>
-                  <th>Order ID</th>
+                  <th>Buy Order ID</th>
                   <th>Symbol</th>
-                  <th>Transaction</th>
                   <th>Quantity</th>
-                  <th>Entry Price</th>
+                  <th>Buy Price</th>
                   <th>Exit Price</th>
                   <th>PnL</th>
-                  <th>Trend</th>
                   <th>Status</th>
-                  <th>Created At</th>
+                  <th>Buy Time</th>
                   <th>Exit Time</th>
                 </tr>
               </thead>
@@ -211,12 +209,10 @@ export default function Dashboard() {
                     <td>{trade.clientName}</td>
                     <td>{trade.orderId}</td>
                     <td>{trade.symbol}</td>
-                    <td>{trade.transactionType}</td>
                     <td>{trade.quantity}</td>
                     <td>{trade.entry_price}</td>
                     <td>{trade.exit_price || "-"}</td>
-                    <td>{trade.pnl || 0}</td>
-                    <td>{trade.trend}</td>
+                    <td>{(trade.exit_price - trade.entry_price).toFixed(2) || 0}</td>
                     <td>{trade.status}</td>
                     <td>{trade.created_at}</td>
                     <td>{trade.exit_time || "-"}</td>
@@ -276,7 +272,8 @@ const styles = {
     padding: "35px",
     borderRadius: "14px",
     boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
-    textAlign: "center",
+    textAlign: "left", // align text to left inside card
+    margin: "0 auto", // optional: keeps card centered horizontally
   },
   title: {
     fontSize: "1.8rem",
@@ -315,19 +312,25 @@ const styles = {
     width: "100%",
     borderCollapse: "collapse",
     marginTop: "20px",
+    tableLayout: "auto",
   },
+
   th: {
     backgroundColor: "#2563EB",
     color: "#fff",
-    padding: "10px",
+    padding: "10px 16px", // more horizontal padding for gap
     fontWeight: "600",
     border: "1px solid #ddd",
+    textAlign: "left", // align headers to left
+    minWidth: "120px",
   },
+
   td: {
-    padding: "8px",
+    padding: "8px 16px", // more horizontal padding for gap
     border: "1px solid #ddd",
-    textAlign: "center",
+    textAlign: "left", // align cell content to left
     fontSize: "14px",
+    whiteSpace: "nowrap",
   },
   footer: {
     marginTop: "25px",
