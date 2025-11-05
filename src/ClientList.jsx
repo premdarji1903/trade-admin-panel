@@ -14,12 +14,18 @@ const ClientsList = () => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [targetClient, setTargetClient] = useState(null);
+  const [deleteToast, setDeleteToast] = useState("");
   const handleEdit = (client) => {
     setSelectedClient(client);
     setIsDrawerOpen(true);
   };
 
+  const handleOpenDeleteModal = (client) => {
+    setTargetClient(client);
+    setShowDeleteModal(true);
+  };
   const handleEditClient = async () => {
     if (!selectedClient?._id) {
       alert("❌ No client selected");
@@ -56,7 +62,41 @@ const ClientsList = () => {
     } catch (error) {
       console.error("Error updating trades:", error);
       setPopupMessage("❌ Something went wrong while updating trades");
-      setTimeout(() => setPopupMessage(""), 2500);
+      setTimeout(() => {
+        setPopupMessage("");
+        fetchClients(page);
+      }, 2500);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetClient?._id) return;
+
+    try {
+      const response = await fetch(
+        `https://trade-client-server.onrender.com/clients/${targetClient._id}`,
+        { method: "DELETE" }
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setDeleteToast(data.message || "✅ Client deleted successfully");
+        setShowDeleteModal(false);
+        fetchClients(page);
+        // Remove deleted client from UI
+        // setClients(prev => prev.filter(c => c._id !== targetClient._id));
+
+        setTimeout(() => {
+          setDeleteToast("");
+        }, 2500);
+      } else {
+        setDeleteToast(`❌ ${data.message || "Failed to delete client"}`);
+        setTimeout(() => setDeleteToast(""), 2500);
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      setDeleteToast("❌ Something went wrong while deleting");
+      setTimeout(() => setDeleteToast(""), 2500);
     }
   };
 
@@ -192,7 +232,7 @@ const ClientsList = () => {
                 <td style={styles.td}>
                   <FaTrash
                     style={{ cursor: "pointer", color: "#dc3545" }}
-                    onClick={() => console.log("Delete", client)}
+                    onClick={() => handleOpenDeleteModal(client)}
                   />
                 </td>
               </tr>
@@ -492,6 +532,114 @@ const ClientsList = () => {
         >
           {popupMessage}
         </div>
+      )}
+
+      {showDeleteModal && (
+        <>
+          {/* Dim background */}
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.45)",
+              zIndex: 999,
+            }}
+            onClick={() => setShowDeleteModal(false)}
+          />
+
+          {/* Confirmation Box */}
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              background: "#fff",
+              padding: "25px 30px",
+              borderRadius: "12px",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+              zIndex: 1000,
+              width: "350px",
+              textAlign: "center",
+              animation: "fadeInScale 0.3s ease",
+            }}
+          >
+            <h3 style={{ marginBottom: "10px", color: "#d93025" }}>
+              ⚠️ Confirm Delete
+            </h3>
+            <p style={{ marginBottom: "20px", color: "#555" }}>
+              Are you sure you want to permanently remove this client?
+            </p>
+            <div
+              style={{ display: "flex", justifyContent: "center", gap: "12px" }}
+            >
+              <button
+                onClick={handleConfirmDelete}
+                style={{
+                  background: "linear-gradient(90deg, #dc3545, #ff6b81)",
+                  color: "#fff",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  transition: "transform 0.2s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "scale(1.05)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "scale(1)")
+                }
+              >
+                Yes, Delete
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  background: "#e9ecef",
+                  color: "#333",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                  transition: "background 0.2s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "#d6d8db")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "#e9ecef")
+                }
+              >
+                Cancel
+              </button>
+            </div>
+
+            {deleteToast && (
+              <div
+                style={{
+                  position: "fixed",
+                  bottom: "30px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "#333",
+                  color: "#fff",
+                  padding: "12px 20px",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+                  fontWeight: "500",
+                  zIndex: 2000,
+                  animation: "fadeInOut 2.5s ease",
+                }}
+              >
+                {deleteToast}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
