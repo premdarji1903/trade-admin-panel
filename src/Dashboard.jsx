@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import "./App.css";
 export default function Dashboard() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,82 +13,82 @@ export default function Dashboard() {
   const [showTokenBox, setShowTokenBox] = useState(false); // Toggle box
   const [clientIdInput, setClientIdInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
-   const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-// Updated fetchTrades to accept clientName
-const fetchTrades = async (start, end, pageNo = 1) => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem("token");
-    const query = new URLSearchParams();
-    if (start) query.append("start", start);
-    if (end) query.append("end", end);
-    query.append("page", pageNo);
-    query.append("limit", limit);
+  // Updated fetchTrades to accept clientName
+  const fetchTrades = async (start, end, pageNo = 1) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const query = new URLSearchParams();
+      if (start) query.append("start", start);
+      if (end) query.append("end", end);
+      query.append("page", pageNo);
+      query.append("limit", limit);
 
-    const res = await fetch(
-      `https://trade-client-server.onrender.com/trades?${query.toString()}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(
+        `https://trade-client-server.onrender.com/trades?${query.toString()}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        navigate("/");
+        return;
       }
-    );
 
-    if (res.status === 401 || res.status === 403) {
-      localStorage.removeItem("token");
-      navigate("/");
-      return;
+      const data = await res.json();
+      setTrades(data?.trades);
+      setTotalPages(data.totalPages);
+      setPage(data.page);
+    } catch (error) {
+      console.error("Error fetching trades:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const data = await res.json();
-    setTrades(data?.trades);
-    setTotalPages(data.totalPages);
-    setPage(data.page);
-  } catch (error) {
-    console.error("Error fetching trades:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchSearchTrades = async (pageNo = 1, clientName) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const query = new URLSearchParams();
+      query.append("page", pageNo);
+      query.append("limit", limit);
+      if (clientName) query.append("clientName", clientName); // optional clientName
 
-const fetchSearchTrades = async (pageNo = 1, clientName) => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem("token");
-    const query = new URLSearchParams();
-    query.append("page", pageNo);
-    query.append("limit", limit);
-    if (clientName) query.append("clientName", clientName); // optional clientName
+      const res = await fetch(
+        `https://trade-client-server.onrender.com/trades?${query.toString()}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const res = await fetch(
-      `https://trade-client-server.onrender.com/trades?${query.toString()}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        navigate("/");
+        return;
       }
-    );
 
-    if (res.status === 401 || res.status === 403) {
-      localStorage.removeItem("token");
-      navigate("/");
-      return;
+      const data = await res.json();
+      setTrades(data?.trades);
+      setTotalPages(data.totalPages);
+      setPage(data.page);
+    } catch (error) {
+      console.error("Error fetching trades:", error);
+    } finally {
+      setLoading(false);
     }
-
-    const data = await res.json();
-    setTrades(data?.trades);
-    setTotalPages(data.totalPages);
-    setPage(data.page);
-  } catch (error) {
-    console.error("Error fetching trades:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -124,10 +124,10 @@ const fetchSearchTrades = async (pageNo = 1, clientName) => {
       alert("Error updating token");
     }
   };
- 
+
   const handleSearch = () => {
     setSearchTerm(searchTerm);
-   fetchSearchTrades(1, searchTerm);
+    fetchSearchTrades(1, searchTerm);
   };
 
   const handleKeyPress = (e) => {
@@ -165,12 +165,6 @@ const fetchSearchTrades = async (pageNo = 1, clientName) => {
           <div style={{ display: "flex", gap: "10px" }}>
             <button onClick={handleLogout} style={styles.logoutButton}>
               Logout
-            </button>
-            <button
-              style={styles.updateTokenButton}
-              onClick={() => setShowTokenBox((prev) => !prev)}
-            >
-              Update Token
             </button>
             <button
               style={styles.clientsButton}

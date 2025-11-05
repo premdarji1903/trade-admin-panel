@@ -3,7 +3,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
-
+import { FaEdit, FaTrash } from "react-icons/fa";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const ClientsList = () => {
@@ -11,6 +11,59 @@ const ClientsList = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+
+  const handleEdit = (client) => {
+    setSelectedClient(client);
+    setIsDrawerOpen(true);
+  };
+
+  const handleEditClient = async () => {
+    if (!selectedClient?._id) {
+      alert("❌ No client selected");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://trade-client-server.onrender.com/clients/${selectedClient._id}/trades`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            trade: selectedClient.trade || [],
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        setPopupMessage(data.message || "✅ Trades updated successfully");
+        setTimeout(() => {
+          setPopupMessage("");
+          setIsDrawerOpen(false);
+          fetchClients(page);
+          // Close drawer after popup
+        }, 2000);
+      } else {
+        setPopupMessage(`❌ ${data.message || "Failed to update trades"}`);
+        setTimeout(() => setPopupMessage(""), 2500);
+      }
+    } catch (error) {
+      console.error("Error updating trades:", error);
+      setPopupMessage("❌ Something went wrong while updating trades");
+      setTimeout(() => setPopupMessage(""), 2500);
+    }
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedClient(null);
+  };
 
   const fetchClients = async (pageNumber = 1) => {
     try {
@@ -35,9 +88,12 @@ const ClientsList = () => {
   const handleTogglePaid = async (clientId, currentValue) => {
     try {
       const newValue = !currentValue;
-      await axios.patch(`https://trade-client-server.onrender.com/clients/${clientId}/isPaid`, {
-        isPaid: newValue,
-      });
+      await axios.patch(
+        `https://trade-client-server.onrender.com/clients/${clientId}/isPaid`,
+        {
+          isPaid: newValue,
+        }
+      );
 
       // Update UI
       setClients((prev) =>
@@ -68,6 +124,8 @@ const ClientsList = () => {
               <th style={styles.th}>Trade</th>
               <th style={styles.th}>Last Login Date</th>
               <th style={styles.th}>Last Login Time</th>
+              <th style={styles.th}>Edit Client</th>
+              <th style={styles.th}>Remove Client</th>
             </tr>
           </thead>
           <tbody>
@@ -125,6 +183,18 @@ const ClientsList = () => {
                         .format("hh:mm:ss A")
                     : "-"}
                 </td>
+                <td style={styles.td}>
+                  <FaEdit
+                    style={{ cursor: "pointer", color: "#007bff" }}
+                    onClick={() => handleEdit(client)}
+                  />
+                </td>
+                <td style={styles.td}>
+                  <FaTrash
+                    style={{ cursor: "pointer", color: "#dc3545" }}
+                    onClick={() => console.log("Delete", client)}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -151,6 +221,278 @@ const ClientsList = () => {
           Next →
         </button>
       </div>
+      {isDrawerOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={closeDrawer}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              backdropFilter: "blur(2px)",
+              zIndex: 999,
+              opacity: isDrawerOpen ? 1 : 0,
+              transition: "opacity 0.3s ease-in-out",
+            }}
+          />
+
+          {/* Drawer Panel */}
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              width: "380px",
+              height: "100%",
+              backgroundColor: "#fff",
+              boxShadow: "-4px 0 20px rgba(0,0,0,0.2)",
+              borderTopLeftRadius: "16px",
+              borderBottomLeftRadius: "16px",
+              padding: "24px",
+              zIndex: 1000,
+              transform: isDrawerOpen ? "translateX(0)" : "translateX(100%)",
+              transition: "transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <h2
+              style={{
+                marginBottom: "16px",
+                fontSize: "1.5rem",
+                color: "#222",
+                fontWeight: 600,
+                borderBottom: "1px solid #eee",
+                paddingBottom: "8px",
+              }}
+            >
+              ✏️ Edit Client
+            </h2>
+
+            {selectedClient && (
+              <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}>
+                <p
+                  style={{
+                    fontSize: "1rem",
+                    marginBottom: "8px",
+                    color: "#444",
+                  }}
+                >
+                  <strong>Client Name:</strong>{" "}
+                  <span style={{ color: "#007bff" }}>
+                    {selectedClient.clientName}
+                  </span>
+                </p>
+
+                <div style={{ marginTop: "12px" }}>
+                  <label
+                    htmlFor="tradeSelect"
+                    style={{
+                      display: "block",
+                      fontWeight: "bold",
+                      color: "#333",
+                      marginBottom: "8px",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Select Trades:
+                  </label>
+
+                  {/* Checkbox options */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    {["Nifty", "Natural Gas", "Crude Oil"].map((trade) => (
+                      <label
+                        key={trade}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          background: "#fff",
+                          border: "1px solid #ddd",
+                          borderRadius: "8px",
+                          padding: "10px 12px",
+                          cursor: "pointer",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                          transition: "all 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#f1f8ff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#fff";
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          value={trade}
+                          checked={selectedClient.trade?.includes(trade)}
+                          onChange={(e) => {
+                            const { checked, value } = e.target;
+                            setSelectedClient((prev) => {
+                              let updatedTrades = [...(prev.trade || [])];
+                              if (checked) {
+                                updatedTrades.push(value);
+                              } else {
+                                updatedTrades = updatedTrades.filter(
+                                  (t) => t !== value
+                                );
+                              }
+                              return { ...prev, trade: updatedTrades };
+                            });
+                          }}
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            accentColor: "#007bff",
+                            cursor: "pointer",
+                          }}
+                        />
+                        <span style={{ fontSize: "1rem", color: "#333" }}>
+                          {trade}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Selected trades preview */}
+                  {selectedClient.trade?.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "14px",
+                        background: "#f8f9fa",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        boxShadow: "inset 0 0 4px rgba(0,0,0,0.05)",
+                      }}
+                    >
+                      <strong>Selected:</strong>
+                      <ul
+                        style={{
+                          listStyle: "none",
+                          padding: 0,
+                          margin: "6px 0 0 0",
+                        }}
+                      >
+                        {selectedClient.trade.map((trade, idx) => (
+                          <li
+                            key={idx}
+                            style={{
+                              backgroundColor: "#fff",
+                              marginBottom: "6px",
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            {trade}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: "12px",
+                    marginTop: "24px",
+                  }}
+                >
+                  {/* ✏️ Edit Button */}
+                  <button
+                    onClick={handleEditClient} // Replace this with your edit function
+                    style={{
+                      background: "linear-gradient(90deg, #28a745, #34d058)",
+                      color: "white",
+                      border: "none",
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      letterSpacing: "0.5px",
+                      boxShadow: "0 3px 8px rgba(40,167,69,0.3)",
+                      transition: "all 0.25s ease",
+                      minWidth: "100px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 5px 12px rgba(40,167,69,0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 3px 8px rgba(40,167,69,0.3)";
+                    }}
+                  >
+                    ✏️ Edit
+                  </button>
+
+                  {/* ❌ Close Button */}
+                  <button
+                    onClick={closeDrawer}
+                    style={{
+                      background: "linear-gradient(90deg, #007bff, #00a2ff)",
+                      color: "white",
+                      border: "none",
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      letterSpacing: "0.5px",
+                      boxShadow: "0 3px 8px rgba(0,123,255,0.3)",
+                      transition: "all 0.25s ease",
+                      minWidth: "100px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 5px 12px rgba(0,123,255,0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 3px 8px rgba(0,123,255,0.3)";
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      {popupMessage && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            backgroundColor: "#333",
+            color: "#fff",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+            zIndex: 2000,
+            fontWeight: "500",
+            animation: "fadeInOut 2.5s ease",
+          }}
+        >
+          {popupMessage}
+        </div>
+      )}
     </div>
   );
 };
@@ -242,15 +584,15 @@ const styles = {
     borderBottom: "1px solid #ddd",
     fontSize: "14px",
     color: "#333",
-    textAlign: "center", 
+    textAlign: "center",
     verticalAlign: "middle",
   },
   th: {
     padding: "12px 10px",
     backgroundColor: "#1976d2",
     color: "#fff",
-    textAlign: "center", 
-    verticalAlign: "middle", 
+    textAlign: "center",
+    verticalAlign: "middle",
     fontSize: "14px",
     fontWeight: "600",
     borderBottom: "2px solid #1565c0",
