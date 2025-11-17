@@ -283,7 +283,7 @@ export default function Dashboard() {
                             : trade.symbol.toLowerCase()?.includes("nifty")
                             ? 75
                             : 1;
-                        return (pnl * multiplier).toFixed(2);
+                        return (pnl * multiplier * trade.quantity).toFixed(2);
                       })()}
                     </td>
 
