@@ -134,7 +134,6 @@ export default function Dashboard() {
     if (e.key === "Enter") handleSearch(); // Trigger search on Enter
   };
 
-
   useEffect(() => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -274,9 +273,20 @@ export default function Dashboard() {
                     <td>{trade.quantity}</td>
                     <td>{trade.entry_price}</td>
                     <td>{trade.exit_price || "-"}</td>
+
                     <td>
-                      {(trade.exit_price - trade.entry_price).toFixed(2) || 0}
+                      {(() => {
+                        const pnl = trade.exit_price - trade.entry_price || 0;
+                        const multiplier =
+                          trade.symbol.toLowerCase().includes("naturalgas")
+                            ? 1250
+                            : trade.symbol.toLowerCase()?.includes("nifty")
+                            ? 75
+                            : 1;
+                        return (pnl * multiplier).toFixed(2);
+                      })()}
                     </td>
+
                     <td>{trade.status}</td>
                     <td>{trade.created_at}</td>
                     <td>{trade.exit_time || "-"}</td>
