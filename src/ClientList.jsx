@@ -109,7 +109,7 @@ const ClientsList = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `https://trade-client-server.onrender.com/clients?page=${pageNumber}&limit=10`
+        `https://trade-client-server.onrender.com/clients/all-clients?page=${pageNumber}&limit=10`
       );
       setClients(res.data.clients || []);
       setTotalPages(res.data.totalPages);
