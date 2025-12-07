@@ -262,6 +262,7 @@ export default function Dashboard() {
                   <th>Status</th>
                   <th>Buy Time</th>
                   <th>Exit Time</th>
+                  <th>Duration</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,23 +274,38 @@ export default function Dashboard() {
                     <td>{trade.quantity}</td>
                     <td>{trade.entry_price}</td>
                     <td>{trade.exit_price || "-"}</td>
-
+                    {/* Duration Column */}
                     <td>
                       {(() => {
                         const pnl = trade.exit_price - trade.entry_price || 0;
-                        const multiplier =
-                          trade.symbol.toLowerCase().includes("naturalgas")
-                            ? 1250
-                            : trade.symbol.toLowerCase()?.includes("nifty")
-                            ? 75
-                            : 1;
+                        const multiplier = trade.symbol
+                          .toLowerCase()
+                          .includes("naturalgas")
+                          ? 1250
+                          : trade.symbol.toLowerCase()?.includes("nifty")
+                          ? 75
+                          : 1;
                         return (pnl * multiplier * trade.quantity).toFixed(2);
                       })()}
                     </td>
-
                     <td>{trade.status}</td>
                     <td>{trade.created_at}</td>
                     <td>{trade.exit_time || "-"}</td>
+                     <td>
+                      {(() => {
+                        if (!trade.created_at || !trade.exit_time) return "-";
+
+                        const entry = new Date(trade.created_at);
+                        const exit = new Date(trade.exit_time);
+
+                        const diffMs = exit - entry;
+                        const minutes = Math.floor(diffMs / 1000 / 60);
+                        const seconds = Math.floor((diffMs / 1000) % 60);
+                        return `${minutes}m ${
+                          seconds < 10 ? "0" : ""
+                        }${seconds}s`;
+                      })()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
