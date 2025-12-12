@@ -336,7 +336,7 @@ const ClientsList = () => {
                     color: "#444",
                   }}
                 >
-                  <strong>Client Name:</strong>{" "}
+                  <strong>Client Broker:</strong>{" "}
                   <span style={{ color: "#007bff" }}>
                     {selectedClient.broker}
                   </span>
