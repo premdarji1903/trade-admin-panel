@@ -17,6 +17,7 @@ const ClientsList = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [targetClient, setTargetClient] = useState(null);
   const [deleteToast, setDeleteToast] = useState("");
+
   const handleEdit = (client) => {
     setSelectedClient(client);
     setIsDrawerOpen(true);
@@ -42,6 +43,7 @@ const ClientsList = () => {
           },
           body: JSON.stringify({
             trade: selectedClient.trade || [],
+            broker: selectedClient.broker ?? '',
           }),
         }
       );
@@ -158,6 +160,7 @@ const ClientsList = () => {
             <tr>
               <th style={styles.th}>No.</th>
               <th style={styles.th}>Client Name</th>
+              <th style={styles.th}>Broker</th>
               <th style={styles.th}>Email</th>
               <th style={styles.th}>Phone</th>
               <th style={styles.th}>Paid</th>
@@ -173,6 +176,7 @@ const ClientsList = () => {
               <tr key={client._id}>
                 <td style={styles.td}>{index + 1 + (page - 1) * 10}</td>
                 <td style={styles.td}>{client.clientName || "N/A"}</td>
+                <td style={styles.td}>{client.broker || "N/A"}</td>
                 <td style={styles.td}>{client.email || "-"}</td>
                 <td style={styles.td}>{client.mobileNumber || "-"}</td>
                 <td style={styles.td}>
@@ -325,6 +329,19 @@ const ClientsList = () => {
                   </span>
                 </p>
 
+                <p
+                  style={{
+                    fontSize: "1rem",
+                    marginBottom: "8px",
+                    color: "#444",
+                  }}
+                >
+                  <strong>Client Name:</strong>{" "}
+                  <span style={{ color: "#007bff" }}>
+                    {selectedClient.broker}
+                  </span>
+                </p>
+
                 <div style={{ marginTop: "12px" }}>
                   <label
                     htmlFor="tradeSelect"
@@ -399,6 +416,41 @@ const ClientsList = () => {
                         </span>
                       </label>
                     ))}
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "14px", color: "#555" }}>
+                      Select Broker:
+                    </label>
+
+                    <select
+                      style={{
+                        width: "100%",
+                        padding: "8px",
+                        marginTop: "5px",
+                        fontSize: "14px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        color: "#333",
+                      }}
+                      value={selectedClient.broker || ""}
+                      onChange={(e) =>
+                        setSelectedClient((prev) => ({
+                          ...prev,
+                          broker: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">-- Select Broker --</option>
+
+                      {["dhan", "angel one", "paytm money", "zerodha"]
+                        .filter((b) => b !== selectedClient.broker) // 🚀 remove already selected broker
+                        .map((broker) => (
+                          <option key={broker} value={broker}>
+                            {broker}
+                          </option>
+                        ))}
+                    </select>
                   </div>
 
                   {/* Selected trades preview */}
