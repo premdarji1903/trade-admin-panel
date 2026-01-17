@@ -135,7 +135,7 @@ export default function Dashboard() {
       const multiplier = trade.symbol?.toLowerCase().includes("naturalgas")
         ? 1250
         : trade.symbol?.toLowerCase().includes("nifty")
-        ? 75
+        ? 65
         : trade.symbol?.toLowerCase().includes("crude")
         ? 100
         : 1;
@@ -278,7 +278,7 @@ export default function Dashboard() {
                       .includes("naturalgas")
                       ? 1250
                       : t.symbol?.toLowerCase().includes("nifty")
-                      ? 75
+                      ? 65
                       : t.symbol?.toLowerCase().includes("crude")
                       ? 100
                       : 1;
