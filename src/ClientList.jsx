@@ -19,7 +19,10 @@ const ClientsList = () => {
   const [deleteToast, setDeleteToast] = useState("");
 
   const handleEdit = (client) => {
-    setSelectedClient(client);
+    setSelectedClient({
+      ...client,
+      ipFlag: client.ipFlag || "PRIMARY",
+    });
     setIsDrawerOpen(true);
   };
 
@@ -43,9 +46,11 @@ const ClientsList = () => {
           },
           body: JSON.stringify({
             trade: selectedClient.trade || [],
-            broker: selectedClient.broker ?? '',
+            broker: selectedClient.broker ?? "",
+            ip: selectedClient.ip ?? "",
+            ipFlag: selectedClient.ipFlag ?? "",
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -77,7 +82,7 @@ const ClientsList = () => {
     try {
       const response = await fetch(
         `https://trade-client-server.onrender.com/clients/${targetClient._id}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       const data = await response.json();
 
@@ -111,7 +116,7 @@ const ClientsList = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `https://trade-client-server.onrender.com/clients/all-clients?page=${pageNumber}&limit=10`
+        `https://trade-client-server.onrender.com/clients/all-clients?page=${pageNumber}&limit=10`,
       );
       setClients(res.data.clients || []);
       setTotalPages(res.data.totalPages);
@@ -134,14 +139,14 @@ const ClientsList = () => {
         `https://trade-client-server.onrender.com/clients/${clientId}/isPaid`,
         {
           isPaid: newValue,
-        }
+        },
       );
 
       // Update UI
       setClients((prev) =>
         prev.map((client) =>
-          client._id === clientId ? { ...client, isPaid: newValue } : client
-        )
+          client._id === clientId ? { ...client, isPaid: newValue } : client,
+        ),
       );
     } catch (error) {
       console.error("Error updating isPaid:", error);
@@ -398,7 +403,7 @@ const ClientsList = () => {
                                 updatedTrades.push(value);
                               } else {
                                 updatedTrades = updatedTrades.filter(
-                                  (t) => t !== value
+                                  (t) => t !== value,
                                 );
                               }
                               return { ...prev, trade: updatedTrades };
@@ -488,6 +493,62 @@ const ClientsList = () => {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {selectedClient.broker === "dhan" && (
+                    <div style={{ marginTop: "12px" }}>
+                      {/* IP */}
+                      <div style={{ marginBottom: "10px" }}>
+                        <label style={{ fontSize: "14px", color: "#555" }}>
+                          IP Address:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter IP"
+                          value={selectedClient.ip || ""}
+                          onChange={(e) =>
+                            setSelectedClient((prev) => ({
+                              ...prev,
+                              ip: e.target.value,
+                            }))
+                          }
+                          style={{
+                            width: "100%",
+                            padding: "8px",
+                            marginTop: "5px",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                          }}
+                        />
+                      </div>
+
+                      {/* IP FLAG (manual selection) */}
+                      <div>
+                        <label style={{ fontSize: "14px", color: "#555" }}>
+                          IP Flag:
+                        </label>
+                        <select
+                          value={selectedClient.ipFlag || ""}
+                          onChange={(e) =>
+                            setSelectedClient((prev) => ({
+                              ...prev,
+                              ipFlag: e.target.value,
+                            }))
+                          }
+                          style={{
+                            width: "100%",
+                            padding: "8px",
+                            marginTop: "5px",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                          }}
+                        >
+                          <option value="">-- Select Flag --</option>
+                          <option value="PRIMARY">PRIMARY</option>
+                          <option value="SECONDARY">SECONDARY</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>
