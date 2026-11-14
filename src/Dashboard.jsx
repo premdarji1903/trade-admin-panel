@@ -1,6 +1,23 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  FiArrowDownRight,
+  FiArrowUpRight,
+  FiChevronLeft,
+  FiChevronRight,
+  FiClock,
+  FiFilter,
+  FiInbox,
+  FiLayers,
+  FiSearch,
+  FiTrendingDown,
+  FiTrendingUp,
+  FiUser,
+  FiUsers,
+} from "react-icons/fi";
+import { Topbar, Skeleton } from "./AdminLayout";
+import { getInitials, getHue } from "./adminUtils";
 import "./App.css";
 
 export default function Dashboard() {
@@ -144,386 +161,438 @@ export default function Dashboard() {
     }, 0);
   };
 
+  // same multiplier logic as calculateTotalPnL, per row (display only)
+  const getTradePnl = (t) => {
+    const pnl = (t.exit_price || 0) - (t.entry_price || 0);
+    const multiplier = t.symbol?.toLowerCase().includes("naturalgas")
+      ? 1250
+      : t.symbol?.toLowerCase().includes("nifty")
+      ? 65
+      : t.symbol?.toLowerCase().includes("crude")
+      ? 100
+      : 1;
+    return pnl * multiplier * t.quantity;
+  };
+
+  const getStatusTone = (status = "") => {
+    const s = String(status).toLowerCase();
+    if (/(reject|cancel|fail|error|\bsl\b)/.test(s)) return "red";
+    if (/(open|pending|active|running|placed)/.test(s)) return "amber";
+    if (/(close|complete|exit|filled|done|success|target)/.test(s))
+      return "green";
+    return "blue";
+  };
+
+  const totalPnL = trades.length ? calculateTotalPnL() : 0;
+  const rowPnls = trades.map(getTradePnl);
+  const winners = rowPnls.filter((p) => p > 0).length;
+  const losers = rowPnls.filter((p) => p < 0).length;
+  const fmt = (n) =>
+    Number(n).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
+    <div className="ap">
+      <Topbar active="trades" onLogout={handleLogout} />
+
+      <main className="ap-main">
         {/* Header */}
-        <div style={styles.header}>
-          <h1 style={styles.title}>Dashboard</h1>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={handleLogout} style={styles.logoutButton}>
-              Logout
-            </button>
-            <button
-              style={styles.clientsButton}
-              onClick={() => navigate("/clients")}
-            >
-              Clients
-            </button>
+        <div className="ap-page-head">
+          <div>
+            <div className="ap-eyebrow">
+              <span className="ap-live-dot" /> Dashboard
+            </div>
+            <h1 className="ap-title">Trade Book</h1>
+            <p className="ap-subtitle">
+              View Trades
+              {startDate && endDate && (
+                <>
+                  {" "}
+                  · {startDate === endDate ? startDate : `${startDate} → ${endDate}`}
+                </>
+              )}
+            </p>
           </div>
+          <button
+            className="ap-btn"
+            onClick={() => navigate("/clients")}
+          >
+            <FiUsers /> Clients
+          </button>
         </div>
+
+        {/* Stats */}
+        <section className="ap-stats">
+          <div
+            className={`ap-card ap-stat ${
+              totalPnL < 0 ? "ap-stat--red" : "ap-stat--green"
+            }`}
+          >
+            <div className="ap-stat-top">
+              <span className="ap-stat-label">Total PnL</span>
+              <span className="ap-stat-icon">
+                {totalPnL < 0 ? <FiTrendingDown /> : <FiTrendingUp />}
+              </span>
+            </div>
+            <div className={`ap-stat-value ${totalPnL < 0 ? "ap-neg" : "ap-pos"}`}>
+              {totalPnL > 0 ? "+" : ""}₹{fmt(totalPnL)}
+            </div>
+            <div className="ap-stat-hint">Current page</div>
+          </div>
+
+          <div className="ap-card ap-stat">
+            <div className="ap-stat-top">
+              <span className="ap-stat-label">Trades</span>
+              <span className="ap-stat-icon">
+                <FiLayers />
+              </span>
+            </div>
+            <div className="ap-stat-value">{trades.length}</div>
+            <div className="ap-stat-hint">
+              Page {page} of {totalPages}
+            </div>
+          </div>
+
+          <div className="ap-card ap-stat ap-stat--green">
+            <div className="ap-stat-top">
+              <span className="ap-stat-label">Winners</span>
+              <span className="ap-stat-icon">
+                <FiArrowUpRight />
+              </span>
+            </div>
+            <div className="ap-stat-value">{winners}</div>
+            <div className="ap-stat-hint">
+              {trades.length
+                ? `${Math.round((winners / trades.length) * 100)}% win rate`
+                : "—"}
+            </div>
+          </div>
+
+          <div className="ap-card ap-stat ap-stat--red">
+            <div className="ap-stat-top">
+              <span className="ap-stat-label">Losers</span>
+              <span className="ap-stat-icon">
+                <FiArrowDownRight />
+              </span>
+            </div>
+            <div className="ap-stat-value">{losers}</div>
+            <div className="ap-stat-hint">
+              {trades.length
+                ? `${Math.round((losers / trades.length) * 100)}% of trades`
+                : "—"}
+            </div>
+          </div>
+        </section>
 
         {/* Token update box */}
         {showTokenBox && (
-          <div style={styles.tokenBox}>
+          <div className="ap-card ap-token-box">
             <input
               type="text"
               placeholder="Client ID"
               value={clientIdInput}
               onChange={(e) => setClientIdInput(e.target.value)}
-              style={styles.tokenInput}
+              className="ap-input"
             />
             <input
               type="text"
               placeholder="New Token"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              style={styles.tokenInput}
+              className="ap-input"
             />
-            <button style={styles.saveTokenButton} onClick={handleUpdateToken}>
+            <button className="ap-btn ap-btn--success" onClick={handleUpdateToken}>
               Save Token
             </button>
           </div>
         )}
 
-        <p style={styles.subtitle}>View Trades</p>
-
-        {/* ✅ Filters */}
-        <div style={styles.dateFilter}>
-          <div>
-            <label>Client Name: </label>
-            <input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              style={styles.dateInput}
-            />
+        {/* Filters */}
+        <section className="ap-card ap-filters">
+          <div className="ap-field">
+            <label className="ap-label">Client Name</label>
+            <div className="ap-input-wrap">
+              <FiUser />
+              <input
+                type="text"
+                placeholder="Search client"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="ap-input"
+              />
+            </div>
           </div>
 
-          <div>
-            <label>Symbol: </label>
-            <input
-              type="text"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              style={styles.dateInput}
-            />
+          <div className="ap-field">
+            <label className="ap-label">Symbol</label>
+            <div className="ap-input-wrap">
+              <FiSearch />
+              <input
+                type="text"
+                placeholder="e.g. NIFTY"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                className="ap-input"
+              />
+            </div>
           </div>
 
-          <div>
-            <label>Start Date: </label>
+          <div className="ap-field">
+            <label className="ap-label">Start Date</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={styles.dateInput}
+              className="ap-input"
             />
           </div>
 
-          <div>
-            <label>End Date: </label>
+          <div className="ap-field">
+            <label className="ap-label">End Date</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={styles.dateInput}
+              className="ap-input"
             />
           </div>
 
-          <button style={styles.filterButton} onClick={handleAdvancedFilter}>
-            Apply Filter
+          <button
+            className="ap-btn ap-btn--primary"
+            style={{ height: 42 }}
+            onClick={handleAdvancedFilter}
+          >
+            <FiFilter /> Apply Filter
           </button>
-        </div>
+        </section>
 
-        {/* Total PnL */}
-        <div
-          style={{
-            marginTop: "10px",
-            fontWeight: "bold",
-            color: calculateTotalPnL() < 0 ? "red" : "black",
-          }}
-        >
-          Total PnL: {trades.length ? calculateTotalPnL().toFixed(2) : 0}
-        </div>
-
-        {/* Trades table */}
-        {loading ? (
-          <p>Loading trades...</p>
-        ) : trades.length === 0 ? (
-          <p>No trades found.</p>
-        ) : (
-          <>
-            <div style={{ overflowX: "auto", marginTop: "20px" }}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Client</th>
-                    <th>Order ID</th>
-                    <th>Symbol</th>
-                    <th>Qty</th>
-                    <th>Buy</th>
-                    <th>Exit</th>
-                    <th>PnL</th>
-                    <th>Status</th>
-                    <th>Buy Time</th>
-                    <th>Exit Time</th>
-                    <th>Duration </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trades.map((t) => {
-                    const pnl = (t.exit_price || 0) - (t.entry_price || 0);
-                    const multiplier = t.symbol
-                      ?.toLowerCase()
-                      .includes("naturalgas")
-                      ? 1250
-                      : t.symbol?.toLowerCase().includes("nifty")
-                      ? 65
-                      : t.symbol?.toLowerCase().includes("crude")
-                      ? 100
-                      : 1;
-                    const finalPnl = pnl * multiplier * t.quantity;
-
-                    return (
-                      <tr key={t._id}>
-                        <td>{t.clientName}</td>
-                        <td>{t.orderId}</td>
-                        <td>{t.symbol}</td>
-                        <td>{t.quantity}</td>
-                        <td>{t.entry_price}</td>
-                        <td>{t.exit_price || "-"}</td>
-                        <td style={{ color: finalPnl < 0 ? "red" : "black" }}>
-                          {finalPnl.toFixed(2)}
-                        </td>
-                        <td>{t.status}</td>
-                        <td>{t.created_at}</td>
-                        <td>{t.exit_time || "-"}</td>
-                        <td>
-                          {getDurationInMinutes(t.created_at, t.exit_time)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        {/* Trades */}
+        <section className="ap-card ap-panel">
+          <div className="ap-panel-head">
+            <div className="ap-panel-title">
+              Trades <span className="ap-count">{trades.length}</span>
             </div>
-
-            {/* ✅ Pagination with filters */}
-            <div style={styles.pagination}>
-              <button
-                onClick={() => {
-                  const newPage = Math.max(page - 1, 1);
-                  setPage(newPage);
-                  fetchTrades(newPage);
-                }}
-                disabled={page === 1}
-                style={styles.pageButton}
+            {!loading && trades.length > 0 && (
+              <span
+                className={`ap-pnl ${totalPnL < 0 ? "ap-neg" : "ap-pos"}`}
               >
-                Prev
-              </button>
-              <span style={styles.pageInfo}>
-                Page {page} of {totalPages}
+                {totalPnL > 0 ? "+" : ""}
+                {totalPnL.toFixed(2)}
               </span>
-              <button
-                onClick={() => {
-                  const newPage = Math.min(page + 1, totalPages);
-                  setPage(newPage);
-                  fetchTrades(newPage);
-                }}
-                disabled={page === totalPages}
-                style={styles.pageButton}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
+            )}
+          </div>
 
-        <p style={styles.footer}>
+          {loading ? (
+            <Skeleton rows={7} />
+          ) : trades.length === 0 ? (
+            <div className="ap-empty">
+              <div className="ap-empty-icon">
+                <FiInbox />
+              </div>
+              <h3>No trades found.</h3>
+              <p>Try changing the date range or filters.</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="ap-table-wrap">
+                <table className="ap-table">
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th>Order ID</th>
+                      <th>Symbol</th>
+                      <th className="ap-right">Qty</th>
+                      <th className="ap-right">Buy</th>
+                      <th className="ap-right">Exit</th>
+                      <th className="ap-right">PnL</th>
+                      <th>Status</th>
+                      <th>Buy Time</th>
+                      <th>Exit Time</th>
+                      <th>Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trades.map((t, i) => {
+                      const finalPnl = rowPnls[i];
+                      return (
+                        <tr key={t._id}>
+                          <td>
+                            <div className="ap-ident">
+                              <span
+                                className="ap-avatar"
+                                style={{
+                                  "--h": getHue(t.clientName || ""),
+                                  width: 30,
+                                  height: 30,
+                                  fontSize: 11.5,
+                                  borderRadius: 9,
+                                }}
+                              >
+                                {getInitials(t.clientName)}
+                              </span>
+                              <span className="ap-strong">{t.clientName}</span>
+                            </div>
+                          </td>
+                          <td className="ap-mono ap-dim">{t.orderId}</td>
+                          <td>
+                            <span className="ap-symbol">
+                              <span className="ap-symbol-dot" />
+                              {t.symbol}
+                            </span>
+                          </td>
+                          <td className="ap-right ap-num">{t.quantity}</td>
+                          <td className="ap-right ap-num">{t.entry_price}</td>
+                          <td className="ap-right ap-num">
+                            {t.exit_price || "-"}
+                          </td>
+                          <td className="ap-right">
+                            <span
+                              className={`ap-pnl ${
+                                finalPnl < 0 ? "ap-neg" : "ap-pos"
+                              }`}
+                            >
+                              {finalPnl.toFixed(2)}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={`ap-badge ap-badge--${getStatusTone(
+                                t.status
+                              )}`}
+                            >
+                              {t.status}
+                            </span>
+                          </td>
+                          <td className="ap-num ap-dim">{t.created_at}</td>
+                          <td className="ap-num ap-dim">{t.exit_time || "-"}</td>
+                          <td className="ap-num">
+                            {getDurationInMinutes(t.created_at, t.exit_time)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile / tablet cards */}
+              <div className="ap-cards">
+                {trades.map((t, i) => {
+                  const finalPnl = rowPnls[i];
+                  return (
+                    <article className="ap-mcard" key={t._id}>
+                      <div className="ap-mcard-head">
+                        <div className="ap-ident">
+                          <span
+                            className="ap-avatar"
+                            style={{ "--h": getHue(t.clientName || "") }}
+                          >
+                            {getInitials(t.clientName)}
+                          </span>
+                          <div className="ap-ident-text">
+                            <div className="ap-ident-name">{t.clientName}</div>
+                            <div className="ap-ident-sub ap-symbol">
+                              <span className="ap-symbol-dot" />
+                              {t.symbol}
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          className={`ap-pnl ${finalPnl < 0 ? "ap-neg" : "ap-pos"}`}
+                        >
+                          {finalPnl.toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="ap-mcard-grid ap-mcard-grid--3">
+                        <div className="ap-kv">
+                          <div className="ap-kv-k">Qty</div>
+                          <div className="ap-kv-v">{t.quantity}</div>
+                        </div>
+                        <div className="ap-kv">
+                          <div className="ap-kv-k">Buy</div>
+                          <div className="ap-kv-v">{t.entry_price}</div>
+                        </div>
+                        <div className="ap-kv">
+                          <div className="ap-kv-k">Exit</div>
+                          <div className="ap-kv-v">{t.exit_price || "-"}</div>
+                        </div>
+                      </div>
+
+                      <div className="ap-mcard-grid">
+                        <div className="ap-kv">
+                          <div className="ap-kv-k">Buy Time</div>
+                          <div className="ap-kv-v">{t.created_at}</div>
+                        </div>
+                        <div className="ap-kv">
+                          <div className="ap-kv-k">Exit Time</div>
+                          <div className="ap-kv-v">{t.exit_time || "-"}</div>
+                        </div>
+                      </div>
+
+                      <div className="ap-mcard-foot">
+                        <div className="ap-mcard-meta">
+                          <span className="ap-mono">#{t.orderId}</span>
+                          <span>
+                            <FiClock />
+                            {getDurationInMinutes(t.created_at, t.exit_time)}
+                          </span>
+                        </div>
+                        <span
+                          className={`ap-badge ap-badge--${getStatusTone(
+                            t.status
+                          )}`}
+                        >
+                          {t.status}
+                        </span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {/* Pagination with filters */}
+              <div className="ap-pager">
+                <div className="ap-pager-info">
+                  <span>Page </span>
+                  <b>{page}</b> / {totalPages}
+                </div>
+                <div className="ap-pager-btns">
+                  <button
+                    onClick={() => {
+                      const newPage = Math.max(page - 1, 1);
+                      setPage(newPage);
+                      fetchTrades(newPage);
+                    }}
+                    disabled={page === 1}
+                    className="ap-btn"
+                  >
+                    <FiChevronLeft /> Prev
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newPage = Math.min(page + 1, totalPages);
+                      setPage(newPage);
+                      fetchTrades(newPage);
+                    }}
+                    disabled={page === totalPages}
+                    className="ap-btn"
+                  >
+                    Next <FiChevronRight />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        <p className="ap-footer">
           © {new Date().getFullYear()} Trader Admin Panel
         </p>
-      </div>
+      </main>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    background: "linear-gradient(135deg, #ffffff, #e6f0ff, #2563EB)",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    padding: "20px",
-    paddingTop: "50px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "1200px",
-    background: "#fff",
-    padding: "35px",
-    borderRadius: "14px",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
-    textAlign: "left", // align text to left inside card
-    margin: "0 auto", // optional: keeps card centered horizontally
-  },
-  title: {
-    fontSize: "1.8rem",
-    marginBottom: "10px",
-    fontWeight: "600",
-    color: "#111827",
-  },
-  subtitle: {
-    fontSize: "14px",
-    marginBottom: "25px",
-    color: "#6B7280",
-  },
-  dateFilter: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "15px",
-    marginBottom: "20px",
-    flexWrap: "wrap",
-  },
-  dateInput: {
-    padding: "8px",
-    borderRadius: "6px",
-    border: "1px solid #D1D5DB",
-    outline: "none",
-  },
-  filterButton: {
-    padding: "10px 16px",
-    backgroundColor: "#2563EB",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "500",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    marginTop: "20px",
-    tableLayout: "auto",
-  },
-
-  th: {
-    backgroundColor: "#2563EB",
-    color: "#fff",
-    padding: "10px 16px", // more horizontal padding for gap
-    fontWeight: "600",
-    border: "1px solid #ddd",
-    textAlign: "left", // align headers to left
-    minWidth: "120px",
-  },
-
-  td: {
-    padding: "8px 16px", // more horizontal padding for gap
-    border: "1px solid #ddd",
-    textAlign: "left", // align cell content to left
-    fontSize: "14px",
-    whiteSpace: "nowrap",
-  },
-  footer: {
-    marginTop: "25px",
-    fontSize: "12px",
-    color: "#9CA3AF",
-  },
-  logoutButton: {
-    // display: "block",
-    margin: "0 0 20px auto", // center button and add margin below
-    padding: "10px 20px",
-    backgroundColor: "#EF4444",
-    color: "#fff",
-    border: "none",
-    borderRadius: "20px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "14px",
-  },
-  pagination: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: "20px",
-    gap: "10px",
-  },
-
-  pageButton: {
-    padding: "6px 12px",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    backgroundColor: "#f9fafb",
-    cursor: "pointer",
-    fontWeight: "500",
-  },
-
-  pageInfo: {
-    fontSize: "14px",
-    color: "#374151",
-  },
-  updateTokenButton: {
-    padding: "10px 16px",
-    backgroundColor: "#2563EB",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "500",
-  },
-  tokenBox: {
-    display: "flex",
-    gap: "10px",
-    marginTop: "10px",
-    justifyContent: "center",
-  },
-  tokenInput: {
-    padding: "8px",
-    borderRadius: "6px",
-    border: "1px solid #D1D5DB",
-  },
-  saveTokenButton: {
-    padding: "8px 12px",
-    backgroundColor: "#10B981",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  clientsButton: {
-    backgroundColor: "#2e7d32",
-    color: "#fff",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "500",
-  },
-  container: {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "20px",
-    gap: "10px",
-  },
-  input: {
-    padding: "8px 12px",
-    fontSize: "16px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-    width: "250px",
-  },
-  button: {
-    padding: "8px 16px",
-    fontSize: "16px",
-    borderRadius: "5px",
-    border: "none",
-    backgroundColor: "#4CAF50",
-    color: "#fff",
-    cursor: "pointer",
-    transition: "background-color 0.3s",
-  },
-  buttonHover: {
-    backgroundColor: "#45a049",
-  },
-};

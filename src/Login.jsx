@@ -1,10 +1,24 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  FiActivity,
+  FiAlertCircle,
+  FiArrowRight,
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiMail,
+  FiShield,
+  FiTrendingUp,
+  FiUsers,
+} from "react-icons/fi";
+import "./admin.css";
 export default function AdminLogin() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate(); // React Router hook
 
   const handleChange = (e) => {
@@ -44,135 +58,179 @@ export default function AdminLogin() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Trader Admin Login</h1>
-        <p style={styles.subtitle}>Sign in to access the admin panel</p>
+    <div className="ap ap-login">
+      {/* Brand panel (desktop) */}
+      <aside className="ap-login-brand">
+        <div className="ap-brand">
+          <span className="ap-brand-logo">
+            <FiActivity />
+          </span>
+          <span>
+            Trade Admin
+            <small>Control Center</small>
+          </span>
+        </div>
 
-        <form style={styles.form} onSubmit={handleSubmit}>
-          <div style={styles.row}>
-            <label style={styles.label}>Email Address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="admin@trader.com"
-              value={formData.email}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            />
+        <div className="ap-login-hero">
+          <div className="ap-eyebrow">
+            <span className="ap-live-dot" /> Markets live
+          </div>
+          <h2>
+            Every trade.
+            <br />
+            <span className="ap-grad-text">One command center.</span>
+          </h2>
+          <p>
+            Monitor client trades, track PnL in real time and manage broker
+            access — all from a single dashboard.
+          </p>
+
+          {/* Decorative chart */}
+          <div className="ap-login-chart">
+            <div className="ap-login-chart-head">
+              <div>
+                <div className="ap-kv-k">Today's PnL</div>
+                <div className="ap-login-chart-val ap-pos">+₹48,250.00</div>
+              </div>
+              <span className="ap-badge ap-badge--green">+12.4%</span>
+            </div>
+            <svg viewBox="0 0 320 110" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="apArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5b8cff" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#5b8cff" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="apLine" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#5b8cff" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0,88 C20,84 30,70 50,72 C70,74 80,90 100,80 C120,70 130,48 150,52 C170,56 180,66 200,54 C220,42 232,30 252,34 C272,38 284,22 300,16 L320,10 L320,110 L0,110 Z"
+                fill="url(#apArea)"
+              />
+              <path
+                className="ap-login-line"
+                d="M0,88 C20,84 30,70 50,72 C70,74 80,90 100,80 C120,70 130,48 150,52 C170,56 180,66 200,54 C220,42 232,30 252,34 C272,38 284,22 300,16 L320,10"
+                fill="none"
+                stroke="url(#apLine)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
 
-          <div style={styles.row}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            />
-          </div>
+          <ul className="ap-login-feats">
+            <li>
+              <FiTrendingUp /> Live PnL tracking
+            </li>
+            <li>
+              <FiUsers /> Client management
+            </li>
+            <li>
+              <FiShield /> Secure access
+            </li>
+          </ul>
+        </div>
 
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? "Signing in..." : "Login"}
-          </button>
-        </form>
-
-        {error && <p style={styles.error}>{error}</p>}
-        <p style={styles.footer}>
+        <p className="ap-login-copy">
           © {new Date().getFullYear()} Trader Admin Panel
         </p>
-      </div>
+      </aside>
+
+      {/* Form */}
+      <main className="ap-login-main">
+        <div className="ap-login-card">
+          <div className="ap-login-mobile-brand">
+            <span className="ap-brand-logo">
+              <FiActivity />
+            </span>
+          </div>
+
+          <h1 className="ap-title">Welcome back</h1>
+          <p className="ap-subtitle">Sign in to access the admin panel</p>
+
+          <form className="ap-login-form" onSubmit={handleSubmit}>
+            <div className="ap-field">
+              <label className="ap-label" htmlFor="email">
+                Email Address
+              </label>
+              <div className="ap-input-wrap">
+                <FiMail />
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="admin@trader.com"
+                  autoComplete="username"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="ap-input ap-input--lg"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="ap-field">
+              <label className="ap-label" htmlFor="password">
+                Password
+              </label>
+              <div className="ap-input-wrap">
+                <FiLock />
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Enter password"
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="ap-input ap-input--lg"
+                  style={{ paddingRight: 46 }}
+                  required
+                />
+                <button
+                  type="button"
+                  className="ap-eye"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="ap-login-error" role="alert">
+                <FiAlertCircle /> {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="ap-btn ap-btn--primary ap-login-submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="ap-spinner" /> Signing in...
+                </>
+              ) : (
+                <>
+                  Login <FiArrowRight />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="ap-login-secure">
+            <FiShield /> Secured admin access
+          </div>
+          <p className="ap-login-copy ap-login-copy--mobile">
+            © {new Date().getFullYear()} Trader Admin Panel
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center", // Center horizontally
-    alignItems: "center", // Center vertically
-    background: "linear-gradient(135deg, #ffffff, #e6f0ff, #2563EB)", // Smooth gradient white → light blue → blue
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    padding: "20px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "400px",
-    background: "#fff",
-    padding: "35px",
-    borderRadius: "14px",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
-    textAlign: "center",
-  },
-  title: {
-    fontSize: "1.8rem",
-    marginBottom: "10px",
-    fontWeight: "600",
-    color: "#111827",
-  },
-  subtitle: {
-    fontSize: "14px",
-    marginBottom: "25px",
-    color: "#6B7280",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
-  },
-  row: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-  },
-  label: {
-    marginBottom: "6px",
-    fontSize: "14px",
-    fontWeight: "500",
-    color: "#374151",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #D1D5DB",
-    fontSize: "15px",
-    outline: "none",
-    transition: "all 0.2s ease",
-  },
-  button: {
-    padding: "14px",
-    backgroundColor: "#2563EB",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "500",
-    transition: "background-color 0.3s ease",
-  },
-  error: {
-    marginTop: "15px",
-    color: "red",
-    fontSize: "14px",
-  },
-  footer: {
-    marginTop: "25px",
-    fontSize: "12px",
-    color: "#9CA3AF",
-  },
-};
-
-// Hover/focus styles (inline hack)
-styles.input[":focus"] = {
-  borderColor: "#2563EB",
-  boxShadow: "0 0 5px rgba(37,99,235,0.3)",
-};
-styles.button[":hover"] = {
-  backgroundColor: "#1D4ED8",
-};
